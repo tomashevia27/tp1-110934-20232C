@@ -4,7 +4,7 @@
 
 # TP1
 
-## Repositorio de (Nombre Apellido) - (Padrón) - (Mail)
+## Repositorio de Tomás Hevia - 110934 - thevia@fi.uba.ar
 
 - Para compilar:
 
