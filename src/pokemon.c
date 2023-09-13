@@ -122,15 +122,22 @@ informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 		}
 	}
 
+	fclose(archivo);
+
 	if(hay_pokemon_en_archivo){
 		return info_pokemon;
 	} else{
+		free(info_pokemon);
 		return NULL;
 	}
 }
 
 pokemon_t *pokemon_buscar(informacion_pokemon_t *ip, const char *nombre)
 {
+	if (ip == NULL || nombre == NULL){
+		return NULL;
+	}
+
 	int i = 0;
 	int indice_pokemon_encontrado = -1;
 	while(indice_pokemon_encontrado == -1 && i < ip->cantidad_pokemones){
@@ -139,25 +146,41 @@ pokemon_t *pokemon_buscar(informacion_pokemon_t *ip, const char *nombre)
 		}
 		i++;
 	}
+	/*
 	if(indice_pokemon_encontrado != -1){
 		return ip->pokemones[indice_pokemon_encontrado];
 	} else{
 		return NULL;
-	}
+	}*/
+
+	return (indice_pokemon_encontrado != -1) ? ip->pokemones[indice_pokemon_encontrado] : NULL;
 }
 
 int pokemon_cantidad(informacion_pokemon_t *ip)
 {
+	if (ip == NULL){
+		return 0;
+	}
+	
 	return ip->cantidad_pokemones;
 }
 
 const char *pokemon_nombre(pokemon_t *pokemon)
 {
+	if(pokemon == NULL){
+		return NULL;
+	}
+
 	return pokemon->nombre;
 }
 
 enum TIPO pokemon_tipo(pokemon_t *pokemon)
 {
+	if (pokemon == NULL)
+	{
+		return NORMAL;
+	}
+
 	return pokemon->tipo_pokemon;
 }
 
@@ -172,26 +195,61 @@ const struct ataque *pokemon_buscar_ataque(pokemon_t *pokemon,
 		}
 		i++;
 	}
-	if (indice_ataque_encontrado != -1){
-		return &(pokemon->ataques[indice_ataque_encontrado]);
-	}{
-		return NULL;
+
+	return (indice_ataque_encontrado != -1) ? &(pokemon->ataques[indice_ataque_encontrado]) : NULL;
+}
+
+void ordenar_pokemones(informacion_pokemon_t *ip){
+	for (int i = 0; i < ip->cantidad_pokemones; i++){
+		for (int j = 0; j < ip->cantidad_pokemones-i-1; j++){
+			if(strcmp(ip->pokemones[j]->nombre, ip->pokemones[j+1]->nombre) > 0){
+				pokemon_t aux = *(ip->pokemones[j]);
+				*(ip->pokemones[j]) = *(ip->pokemones[j+1]);
+				*(ip->pokemones[j+1]) = aux;
+			}
+		}
 	}
 }
 
 int con_cada_pokemon(informacion_pokemon_t *ip, void (*f)(pokemon_t *, void *),
 		     void *aux)
-{
-	return 0;
+{	
+	if (ip == NULL || f == NULL){
+		return 0;
+	}
+
+	ordenar_pokemones(ip);
+
+	for (int i = 0; i < ip->cantidad_pokemones; i++){
+		f(ip->pokemones[i], aux);
+	}
+	
+	return ip->cantidad_pokemones;
 }
 
 int con_cada_ataque(pokemon_t *pokemon,
 		    void (*f)(const struct ataque *, void *), void *aux)
 {
-	return 0;
+	if (pokemon == NULL || f == NULL){
+		return 0;
+	}
+
+	int i = 0;
+	while(i < MAX_ATAQUES){
+		f(&(pokemon->ataques[i]), aux);
+		i++;
+	}
+	
+	return i;
 }
 
 void pokemon_destruir_todo(informacion_pokemon_t *ip)
 {
-	free(ip);
+	if(ip != NULL){
+		for (int i = 0; i < ip->cantidad_pokemones; i++){
+			free(ip->pokemones[i]);
+		}
+		free(ip->pokemones);
+		free(ip);
+	}
 }
