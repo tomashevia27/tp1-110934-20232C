@@ -72,13 +72,12 @@ void asignar_tipos(pokemon_t *nuevo_pokemon, char tipo_pokemon, char tipos_ataqu
 	}
 }
 
-void asignar_pokemon_a_info_pokemon(informacion_pokemon_t *info_pokemon, pokemon_t *nuevo_pokemon, char tipo_pokemon, char tipos_ataques[MAX_ATAQUES], bool *hay_pokemon_en_archivo, bool *seguir_leyendo){
+void asignar_pokemon_a_info_pokemon(informacion_pokemon_t *info_pokemon, pokemon_t *nuevo_pokemon, bool *hay_pokemon_en_archivo, bool *seguir_leyendo){
 	(info_pokemon->cantidad_pokemones)++;
 	pokemon_t **puntero_auxiliar = realloc(info_pokemon->pokemones, (long unsigned int)(info_pokemon->cantidad_pokemones)*sizeof(pokemon_t));
 	if(puntero_auxiliar != NULL){
 		info_pokemon->pokemones = puntero_auxiliar;
 		info_pokemon->pokemones[(info_pokemon->cantidad_pokemones)-1] = calloc(1, sizeof(pokemon_t));
-		asignar_tipos(nuevo_pokemon, tipo_pokemon, tipos_ataques);
 		*(info_pokemon->pokemones[(info_pokemon->cantidad_pokemones)-1]) = *nuevo_pokemon;
 		if(info_pokemon->cantidad_pokemones == 1){
 			*hay_pokemon_en_archivo = true;
@@ -86,6 +85,25 @@ void asignar_pokemon_a_info_pokemon(informacion_pokemon_t *info_pokemon, pokemon
 	} else{
 		*seguir_leyendo = false;
 		printf("ocurrio una falla al usar realloc\n");
+	}
+}
+
+pokemon_t * crear_nuevo_pokemon(char linea_pokemon[MAX_CARACTERES], char lineas_ataques[MAX_ATAQUES][MAX_CARACTERES]){
+	pokemon_t *nuevo_pokemon = malloc(sizeof(pokemon_t));
+	if (nuevo_pokemon== NULL) {
+		printf("error al asignar memoria con malloc para nuevo_pokemon");
+		return NULL;
+	}
+	char tipo_pokemon;
+	char tipos_ataques[MAX_ATAQUES];
+	int datos_leidos = 0;
+	asignar_y_contar_datos(linea_pokemon, lineas_ataques, &datos_leidos, nuevo_pokemon, &tipo_pokemon, tipos_ataques);
+	if(validar_datos(datos_leidos, tipo_pokemon, tipos_ataques)){
+		asignar_tipos(nuevo_pokemon, tipo_pokemon, tipos_ataques);
+		return nuevo_pokemon;
+	} else{
+		free(nuevo_pokemon);
+		return NULL;
 	}
 }
 
@@ -116,21 +134,13 @@ informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 		char lineas_ataques[MAX_ATAQUES][MAX_CARACTERES];
 		if(fscanf(archivo, "%s\n%s\n%s\n%s\n", linea_pokemon, lineas_ataques[0], lineas_ataques[1], lineas_ataques[2]) == 4){
 			if(!lineas_nulas(linea_pokemon, lineas_ataques)){
-				pokemon_t *nuevo_pokemon = malloc(sizeof(pokemon_t));
-				if (nuevo_pokemon== NULL) {
-					printf("error al asignar memoria con malloc para nuevo_pokemon");
-					return NULL;
-				}
-				char tipo_pokemon;
-				char tipos_ataques[MAX_ATAQUES];
-				int datos_leidos = 0;
-				asignar_y_contar_datos(linea_pokemon, lineas_ataques, &datos_leidos, nuevo_pokemon, &tipo_pokemon, tipos_ataques);
-				if(validar_datos(datos_leidos, tipo_pokemon, tipos_ataques)){
-					asignar_pokemon_a_info_pokemon(info_pokemon, nuevo_pokemon, tipo_pokemon, tipos_ataques, &hay_pokemon_en_archivo, &seguir_leyendo);
-				} else{
+				pokemon_t *nuevo_pokemon = crear_nuevo_pokemon(linea_pokemon, lineas_ataques);
+				if (nuevo_pokemon != NULL) {
+					asignar_pokemon_a_info_pokemon(info_pokemon, nuevo_pokemon, &hay_pokemon_en_archivo, &seguir_leyendo);
+					free(nuevo_pokemon);
+				} else {
 					seguir_leyendo = false;
 				}
-				free(nuevo_pokemon);
 			} else{
 				seguir_leyendo = false;
 			}
