@@ -45,7 +45,7 @@ Funcion pokemon_cargar_archivo:
 
 esta funcion recibe un string que representa el nombre de un archivo, en la funcion se corrobora que el string no sea nulo y se intenta abrir el archivo, si no se abre la funcion devolvera null y si se abre continuara ejecutandose.
 
-luego se reserva lugar en memoria dinamica para un informacion_pokemon_t que es donde se van a guardar los pokemones, esto se inicializa con calloc (todas las variables en 0)
+luego se reserva lugar en memoria dinamica para un informacion_pokemon_t que es donde se van a guardar los pokemones, esto se inicializa con calloc (todas las variables en 0). En el caso que el calloc falle, se cierra el archivo y se devuelve null
 
 luego usa un bucle while para ir leyendo el archivo y guardando los datos del mismo, se saldra del bucle cuando alguna linea sea invalida, tenga algun dato invalido, falle alguna asignacion de memoria o si el archivo se termina de leer.
 
@@ -53,16 +53,19 @@ dentro del while se leen y guardan 4 lineas del archivo, la primera de estas lin
 se usa un fscanf para leer el archivo y guardar los strings.
 si no se leen correctamente, se termina la iteracion, si se leen bien se sigue ejecutando.
 
-lo siguiente que realiza la funcion es guardar en el heap un pokemon_t nuevo_pokemon usando malloc.
+luefgo mediante la funcion crear_nuevo_pokemon se crea un pokemon_t.
+esta funcion crea un pokemon_t *nuevo_pokemon y le asigna lugar en el heap usando malloc. se chequea que la memoria se haya asignado correctamente.
 luego, con sscanf, se leen las lineas guardadas y los datos se asignan en nuevo_pokemon.
-se validan que los datos sean de la cantidad correcta (11) y que los tipos del pokemon y los ataques sean validos, si esto no se cumple, se termina la iteracion, si se cumple continua.
+se validan que los datos sean de la cantidad correcta (11) y que los tipos del pokemon y los ataques sean validos, si esto no se cumple, se libera la memoria de nuevo_pokemon y se corta la iteracion, si se cumple continua.
 
-luego de validar los datos, queda confirmado que hay un pokemon para asignar a info_pokemon asi que se realiza esta asignacion (reservando memoria en el heap para este pokemon que se asigna) y se aumenta en 1 la cantidad_pokemones.
-la memoria para el pokemon se reserva en info_pokemon->pokemones con realloc (se usa un puntero auxiliar para el caso de que realloc falle, si falla se deja de iterar y el pokemon no se guarda en el vector) entonces el pokemon asignado queda guardado en el vector pokemones y esta en el heap.
-uso realloc aca para poder ir aumentando el lugar en memoria del vector info_pokemon->pokemones a medida que se necesitan ir agregando pokemones nuevos al vector.
+luego de crear el nuevo_pokemon, se va a asignar este pokemon al vector info_pokemon->pokemones mediante la funcion asignar_pokemon_a_info_pokemon.
+esta funcion lo que hace es asignar memoria en el vector pokemones usando realloc. por cada pokemon que se quiere agregar, realloc aumenta el tamaño del vector. se usa un puntero_auxiliar en caso de que realloc falle, asi no se pierde lo que ya hay dentro del vector pokemones.
+luego de asignarle el lugar al vector pokemones, se toma la ultima posicion del vector y con calloc se guarda memoria para el nuevo_pokemon en el heap.
+luego en esa direccion de memoria se copia el valor de la direccion de memoria de nuevo_pokemon. quedando asi guardado en info_pokemon->pokemones el nuevo_pokemon.
 
-la funcion itera mientras se lee el archivo y asignan correctamente los pokemones en info_pokemon. cuando algo falla o el archivo termina, se corta la iteracion y lo siguiente que hace la funcion es chequear si el booleano hay_pokemon_en_archivo es verdadero o falso (lo inicializo en falso y en el momento que se asigna el primer pokemon se cambia a true).
-si es true, devuelve informacion_pokemon_t *info_pokemon (contiene un vector de pokemones y la cantidad de pokemones que hay)
+la funcion itera mientras se lee el archivo y asignan correctamente los pokemones en info_pokemon. cuando algo falla o el archivo termina, se corta la iteracion. lo siguiente que hace la funcion es cerrar el archivo.
+luego chequea si info_pokemon->cantidad_pokemones >= 1 (esto chequea que al menos se guardo un pokemon)
+si es correcto, devuelve informacion_pokemon_t *info_pokemon (contiene un vector de pokemones y la cantidad de pokemones que hay)
 si es false, devuelve null y libera la memoria ocupada por info_pokemon.
 
 
@@ -93,7 +96,11 @@ lo que hace este algoritmo es ir comparando los nombres de los pokemones de a pa
 cuando termina de comparar, arranca otra vez desde el inicio, esta vez llega a comparar hasta el anteultimo pokemon.
 luego arranca devuelta y llega hasta el anteultimo.
 asi itera hasta terminar comparando todos los pokemones y quedan ordenados.
+
 El costo computacional es de n².
+
+
+DIAGRAMA DE MEMORIA:
 
 <div align="center">
 <img width="70%" src="img/diagrama-tp1.svg">

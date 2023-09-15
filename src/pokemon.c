@@ -16,32 +16,44 @@ struct pokemon {
 };
 
 struct info_pokemon {
-	pokemon_t** pokemones;
+	pokemon_t **pokemones;
 	int cantidad_pokemones;
 };
 
-bool lineas_nulas(char linea_pokemon[MAX_CARACTERES], char lineas_ataques[MAX_ATAQUES][MAX_CARACTERES]){
-	return strlen(linea_pokemon) == 0 || strlen(lineas_ataques[0]) == 0 || strlen(lineas_ataques[1]) == 0 || strlen(lineas_ataques[2]) == 0;
-}
-
-void asignar_y_contar_datos(char linea_pokemon[MAX_CARACTERES], char lineas_ataques[MAX_ATAQUES][MAX_CARACTERES], int *datos_leidos, pokemon_t *nuevo_pokemon, char *tipo_pokemon, char tipos_ataques[MAX_ATAQUES]){
-	*datos_leidos += sscanf(linea_pokemon, "%[^;];%c\n", nuevo_pokemon->nombre, tipo_pokemon);
-	for (int i = 0; i < 3; i++){
-		*datos_leidos += sscanf(lineas_ataques[i], "%[^;];%c;%u\n", nuevo_pokemon->ataques[i].nombre, &tipos_ataques[i], &(nuevo_pokemon->ataques[i].poder));
+void pokemon_destruir_todo(informacion_pokemon_t *ip)
+{
+	if (ip != NULL) {
+		for (int i = 0; i < ip->cantidad_pokemones; i++) {
+			free(ip->pokemones[i]);
+		}
+		free(ip->pokemones);
+		free(ip);
 	}
 }
 
-bool validar_tipo(char tipo){
-	return tipo == 'N' || tipo == 'F' || tipo == 'A' || tipo == 'P' || tipo == 'E' || tipo == 'R';
+int leer_lineas(FILE *archivo, char linea_pokemon[MAX_CARACTERES],
+		char lineas_ataques[MAX_ATAQUES][MAX_CARACTERES])
+{
+	return fscanf(archivo, "%s\n%s\n%s\n%s\n", linea_pokemon,
+		      lineas_ataques[0], lineas_ataques[1], lineas_ataques[2]);
 }
 
-enum TIPO char_a_enum_tipo(char caracter_tipo){
+bool validar_tipo(char tipo)
+{
+	return tipo == 'N' || tipo == 'F' || tipo == 'A' || tipo == 'P' ||
+	       tipo == 'E' || tipo == 'R';
+}
+
+bool tipos_validos(char tipo_pokemon, char tipos_ataques[MAX_ATAQUES])
+{
+	return validar_tipo(tipo_pokemon) && validar_tipo(tipos_ataques[0]) &&
+	       validar_tipo(tipos_ataques[1]) && validar_tipo(tipos_ataques[2]);
+}
+
+enum TIPO char_a_enum_tipo(char caracter_tipo)
+{
 	enum TIPO tipo_enum = NORMAL;
-	switch (caracter_tipo)
-	{
-	case 'N':
-		tipo_enum = NORMAL;
-		break;
+	switch (caracter_tipo) {
 	case 'F':
 		tipo_enum = FUEGO;
 		break;
@@ -61,65 +73,98 @@ enum TIPO char_a_enum_tipo(char caracter_tipo){
 	return tipo_enum;
 }
 
-bool validar_datos(int datos_leidos, char tipo_pokemon, char tipos_ataques[MAX_ATAQUES]){
-	return datos_leidos == 11 && validar_tipo(tipo_pokemon) && validar_tipo(tipos_ataques[0]) && validar_tipo(tipos_ataques[1]) && validar_tipo(tipos_ataques[2]);
-}
-
-void asignar_tipos(pokemon_t *nuevo_pokemon, char tipo_pokemon, char tipos_ataques[MAX_ATAQUES]){
+void asignar_tipos(pokemon_t *nuevo_pokemon, char tipo_pokemon,
+		   char tipos_ataques[MAX_ATAQUES])
+{
 	nuevo_pokemon->tipo_pokemon = char_a_enum_tipo(tipo_pokemon);
-	for (int i = 0; i < MAX_ATAQUES; i++){
-		nuevo_pokemon->ataques[i].tipo = char_a_enum_tipo(tipos_ataques[i]);
+	for (int i = 0; i < MAX_ATAQUES; i++) {
+		nuevo_pokemon->ataques[i].tipo =
+			char_a_enum_tipo(tipos_ataques[i]);
 	}
 }
 
-void asignar_pokemon_a_info_pokemon(informacion_pokemon_t *info_pokemon, pokemon_t *nuevo_pokemon, bool *hay_pokemon_en_archivo, bool *seguir_leyendo){
-	(info_pokemon->cantidad_pokemones)++;
-	pokemon_t **puntero_auxiliar = realloc(info_pokemon->pokemones, (long unsigned int)(info_pokemon->cantidad_pokemones)*sizeof(pokemon_t));
-	if(puntero_auxiliar != NULL){
-		info_pokemon->pokemones = puntero_auxiliar;
-		info_pokemon->pokemones[(info_pokemon->cantidad_pokemones)-1] = calloc(1, sizeof(pokemon_t));
-		*(info_pokemon->pokemones[(info_pokemon->cantidad_pokemones)-1]) = *nuevo_pokemon;
-		if(info_pokemon->cantidad_pokemones == 1){
-			*hay_pokemon_en_archivo = true;
-		}
-	} else{
-		*seguir_leyendo = false;
-		printf("ocurrio una falla al usar realloc\n");
+bool asignar_y_validar_datos(char linea_pokemon[MAX_CARACTERES],
+			     char lineas_ataques[MAX_ATAQUES][MAX_CARACTERES],
+			     int *datos_leidos, pokemon_t *nuevo_pokemon,
+			     char *tipo_pokemon,
+			     char tipos_ataques[MAX_ATAQUES])
+{
+	*datos_leidos += sscanf(linea_pokemon, "%[^;];%c\n",
+				nuevo_pokemon->nombre, tipo_pokemon);
+	for (int i = 0; i < MAX_ATAQUES; i++) {
+		*datos_leidos += sscanf(lineas_ataques[i], "%[^;];%c;%u\n",
+					nuevo_pokemon->ataques[i].nombre,
+					&tipos_ataques[i],
+					&(nuevo_pokemon->ataques[i].poder));
 	}
+
+	bool datos_validos = false;
+	if (*datos_leidos == 11 &&
+	    tipos_validos(*tipo_pokemon, tipos_ataques)) {
+		asignar_tipos(nuevo_pokemon, *tipo_pokemon, tipos_ataques);
+		datos_validos = true;
+	}
+
+	return datos_validos;
 }
 
-pokemon_t * crear_nuevo_pokemon(char linea_pokemon[MAX_CARACTERES], char lineas_ataques[MAX_ATAQUES][MAX_CARACTERES]){
+pokemon_t *crear_nuevo_pokemon(char linea_pokemon[MAX_CARACTERES],
+			       char lineas_ataques[MAX_ATAQUES][MAX_CARACTERES])
+{
 	pokemon_t *nuevo_pokemon = malloc(sizeof(pokemon_t));
-	if (nuevo_pokemon== NULL) {
+	if (nuevo_pokemon == NULL) {
 		printf("error al asignar memoria con malloc para nuevo_pokemon");
 		return NULL;
 	}
 	char tipo_pokemon;
 	char tipos_ataques[MAX_ATAQUES];
 	int datos_leidos = 0;
-	asignar_y_contar_datos(linea_pokemon, lineas_ataques, &datos_leidos, nuevo_pokemon, &tipo_pokemon, tipos_ataques);
-	if(validar_datos(datos_leidos, tipo_pokemon, tipos_ataques)){
-		asignar_tipos(nuevo_pokemon, tipo_pokemon, tipos_ataques);
+	if (asignar_y_validar_datos(linea_pokemon, lineas_ataques,
+				    &datos_leidos, nuevo_pokemon, &tipo_pokemon,
+				    tipos_ataques)) {
 		return nuevo_pokemon;
-	} else{
+	} else {
 		free(nuevo_pokemon);
 		return NULL;
 	}
 }
 
+void asignar_pokemon_a_info_pokemon(informacion_pokemon_t *info_pokemon,
+				    pokemon_t *nuevo_pokemon,
+				    bool *seguir_leyendo)
+{
+	(info_pokemon->cantidad_pokemones)++;
+	pokemon_t **puntero_auxiliar =
+		realloc(info_pokemon->pokemones,
+			(long unsigned int)(info_pokemon->cantidad_pokemones) *
+				sizeof(pokemon_t));
+	if (puntero_auxiliar != NULL) {
+		info_pokemon->pokemones = puntero_auxiliar;
+		info_pokemon->pokemones[(info_pokemon->cantidad_pokemones) - 1] =
+			calloc(1, sizeof(pokemon_t));
+		*(info_pokemon
+			  ->pokemones[(info_pokemon->cantidad_pokemones) - 1]) =
+			*nuevo_pokemon;
+	} else {
+		*seguir_leyendo = false;
+		printf("ocurrio una falla al usar realloc\n");
+	}
+}
+
 informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 {
-	if(path == NULL){
-		return NULL;
-	}
-	
-	FILE* archivo = fopen(path, "r");
-	
-	if(archivo == NULL){
+	if (path == NULL) {
 		return NULL;
 	}
 
-	informacion_pokemon_t *info_pokemon = calloc(1, sizeof(informacion_pokemon_t));
+	FILE *archivo = fopen(path, "r");
+
+	if (archivo == NULL) {
+		return NULL;
+	}
+
+	informacion_pokemon_t *info_pokemon =
+		calloc(1, sizeof(informacion_pokemon_t));
 	if (info_pokemon == NULL) {
 		printf("error al asignar memoria con calloc para info_pokemon");
 		fclose(archivo);
@@ -127,42 +172,42 @@ informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 	}
 
 	bool seguir_leyendo = true;
-	bool hay_pokemon_en_archivo = false;
 
-	while (seguir_leyendo){
+	while (seguir_leyendo) {
 		char linea_pokemon[MAX_CARACTERES];
 		char lineas_ataques[MAX_ATAQUES][MAX_CARACTERES];
-		if(fscanf(archivo, "%s\n%s\n%s\n%s\n", linea_pokemon, lineas_ataques[0], lineas_ataques[1], lineas_ataques[2]) == 4){
-			if(!lineas_nulas(linea_pokemon, lineas_ataques)){
-				pokemon_t *nuevo_pokemon = crear_nuevo_pokemon(linea_pokemon, lineas_ataques);
-				if (nuevo_pokemon != NULL) {
-					asignar_pokemon_a_info_pokemon(info_pokemon, nuevo_pokemon, &hay_pokemon_en_archivo, &seguir_leyendo);
-					free(nuevo_pokemon);
-				} else {
-					seguir_leyendo = false;
-				}
-			} else{
+		if (leer_lineas(archivo, linea_pokemon, lineas_ataques) == 4) {
+			pokemon_t *nuevo_pokemon = crear_nuevo_pokemon(
+				linea_pokemon, lineas_ataques);
+			if (nuevo_pokemon != NULL) {
+				asignar_pokemon_a_info_pokemon(info_pokemon,
+							       nuevo_pokemon,
+							       &seguir_leyendo);
+				free(nuevo_pokemon);
+			} else {
 				seguir_leyendo = false;
 			}
-		} else{
+		} else {
 			seguir_leyendo = false;
 		}
 	}
 
 	fclose(archivo);
 
-	if(hay_pokemon_en_archivo){
+	if (info_pokemon->cantidad_pokemones >= 1) {
 		return info_pokemon;
-	} else{
-		free(info_pokemon);
+	} else {
+		pokemon_destruir_todo(info_pokemon);
 		return NULL;
 	}
 }
 
-void recorrer_y_buscar_nombre(informacion_pokemon_t *ip, const char *nombre, int *indice_pokemon_encontrado){
+void recorrer_y_buscar_nombre(informacion_pokemon_t *ip, const char *nombre,
+			      int *indice_pokemon_encontrado)
+{
 	int i = 0;
-	while(*indice_pokemon_encontrado == -1 && i < ip->cantidad_pokemones){
-		if(strcmp(ip->pokemones[i]->nombre, nombre) == 0){
+	while (*indice_pokemon_encontrado == -1 && i < ip->cantidad_pokemones) {
+		if (strcmp(ip->pokemones[i]->nombre, nombre) == 0) {
 			*indice_pokemon_encontrado = i;
 		}
 		i++;
@@ -171,28 +216,30 @@ void recorrer_y_buscar_nombre(informacion_pokemon_t *ip, const char *nombre, int
 
 pokemon_t *pokemon_buscar(informacion_pokemon_t *ip, const char *nombre)
 {
-	if (ip == NULL || nombre == NULL){
+	if (ip == NULL || nombre == NULL) {
 		return NULL;
 	}
 
 	int indice_pokemon_encontrado = -1;
 	recorrer_y_buscar_nombre(ip, nombre, &indice_pokemon_encontrado);
-	
-	return (indice_pokemon_encontrado != -1) ? ip->pokemones[indice_pokemon_encontrado] : NULL;
+
+	return (indice_pokemon_encontrado != -1) ?
+		       ip->pokemones[indice_pokemon_encontrado] :
+		       NULL;
 }
 
 int pokemon_cantidad(informacion_pokemon_t *ip)
 {
-	if (ip == NULL){
+	if (ip == NULL) {
 		return 0;
 	}
-	
+
 	return ip->cantidad_pokemones;
 }
 
 const char *pokemon_nombre(pokemon_t *pokemon)
 {
-	if(pokemon == NULL){
+	if (pokemon == NULL) {
 		return NULL;
 	}
 
@@ -201,18 +248,19 @@ const char *pokemon_nombre(pokemon_t *pokemon)
 
 enum TIPO pokemon_tipo(pokemon_t *pokemon)
 {
-	if (pokemon == NULL)
-	{
+	if (pokemon == NULL) {
 		return NORMAL;
 	}
 
 	return pokemon->tipo_pokemon;
 }
 
-void recorrer_y_buscar_ataque(pokemon_t *pokemon, const char *nombre, int *indice_ataque_encontrado){
+void recorrer_y_buscar_ataque(pokemon_t *pokemon, const char *nombre,
+			      int *indice_ataque_encontrado)
+{
 	int i = 0;
-	while(*indice_ataque_encontrado == -1 && i < MAX_ATAQUES){
-		if (strcmp(pokemon->ataques[i].nombre, nombre) == 0){
+	while (*indice_ataque_encontrado == -1 && i < MAX_ATAQUES) {
+		if (strcmp(pokemon->ataques[i].nombre, nombre) == 0) {
 			*indice_ataque_encontrado = i;
 		}
 		i++;
@@ -225,16 +273,20 @@ const struct ataque *pokemon_buscar_ataque(pokemon_t *pokemon,
 	int indice_ataque_encontrado = -1;
 	recorrer_y_buscar_ataque(pokemon, nombre, &indice_ataque_encontrado);
 
-	return (indice_ataque_encontrado != -1) ? &(pokemon->ataques[indice_ataque_encontrado]) : NULL;
+	return (indice_ataque_encontrado != -1) ?
+		       &(pokemon->ataques[indice_ataque_encontrado]) :
+		       NULL;
 }
 
-void ordenar_pokemones(informacion_pokemon_t *ip){
-	for (int i = 0; i < ip->cantidad_pokemones; i++){
-		for (int j = 0; j < ip->cantidad_pokemones-i-1; j++){
-			if(strcmp(ip->pokemones[j]->nombre, ip->pokemones[j+1]->nombre) > 0){
+void ordenar_pokemones(informacion_pokemon_t *ip)
+{
+	for (int i = 0; i < ip->cantidad_pokemones; i++) {
+		for (int j = 0; j < ip->cantidad_pokemones - i - 1; j++) {
+			if (strcmp(ip->pokemones[j]->nombre,
+				   ip->pokemones[j + 1]->nombre) > 0) {
 				pokemon_t aux = *(ip->pokemones[j]);
-				*(ip->pokemones[j]) = *(ip->pokemones[j+1]);
-				*(ip->pokemones[j+1]) = aux;
+				*(ip->pokemones[j]) = *(ip->pokemones[j + 1]);
+				*(ip->pokemones[j + 1]) = aux;
 			}
 		}
 	}
@@ -242,43 +294,32 @@ void ordenar_pokemones(informacion_pokemon_t *ip){
 
 int con_cada_pokemon(informacion_pokemon_t *ip, void (*f)(pokemon_t *, void *),
 		     void *aux)
-{	
-	if (ip == NULL || f == NULL){
+{
+	if (ip == NULL || f == NULL) {
 		return 0;
 	}
 
 	ordenar_pokemones(ip);
 
-	for (int i = 0; i < ip->cantidad_pokemones; i++){
+	for (int i = 0; i < ip->cantidad_pokemones; i++) {
 		f(ip->pokemones[i], aux);
 	}
-	
+
 	return ip->cantidad_pokemones;
 }
 
 int con_cada_ataque(pokemon_t *pokemon,
 		    void (*f)(const struct ataque *, void *), void *aux)
 {
-	if (pokemon == NULL || f == NULL){
+	if (pokemon == NULL || f == NULL) {
 		return 0;
 	}
 
 	int i = 0;
-	while(i < MAX_ATAQUES){
+	while (i < MAX_ATAQUES) {
 		f(&(pokemon->ataques[i]), aux);
 		i++;
 	}
-	
-	return i;
-}
 
-void pokemon_destruir_todo(informacion_pokemon_t *ip)
-{
-	if(ip != NULL){
-		for (int i = 0; i < ip->cantidad_pokemones; i++){
-			free(ip->pokemones[i]);
-		}
-		free(ip->pokemones);
-		free(ip);
-	}
+	return i;
 }
