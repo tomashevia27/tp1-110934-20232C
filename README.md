@@ -96,7 +96,7 @@ pokemon_destruir_todo: libera toda la memoria que se usa durante la ejecucion de
 
 ## Respuestas a las preguntas teóricas
 
-1. para ordenar los pokemones alfabeticamente, uso el metodo de ordenamiento Burbujeo.
+1) para ordenar los pokemones alfabeticamente, uso el metodo de ordenamiento Burbujeo.
 lo que hace este algoritmo es ir comparando los nombres de los pokemones de a pares "empujando" hacia el fondo del vector al pokemon con nombre "mas grande" alfabeticamente. por ejemplo si compara pokemones[0].nombre = "Pikachu" y pokemones[1].nombre = "Charmander" lo que hace es intercambiar de posicion a estos pokemones, luego continua comparando a Pikachu con el pokemon en la posicion 2, luego la 3 y asi continua hasta el final.
 cuando termina de comparar, arranca otra vez desde el inicio, esta vez llega a comparar hasta el anteultimo pokemon.
 luego arranca devuelta y llega hasta el anteultimo.
