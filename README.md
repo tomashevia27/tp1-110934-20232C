@@ -8,16 +8,21 @@
 
 - Para compilar:
 
-gcc pokemon.c -std=c99 -Wall -Wconversion -Wtype-limits -pedantic -Werror -O2 -g -o pokemon
+```bash
+gcc -std=c99 -Wall -Wconversion -Wtype-limits -pedantic -Werror -O2 -g src/*.c pruebas_chanutron.o -o pruebas_chanutron
+```
 
 - Para ejecutar:
 
-./pokemon
+```bash
+bash ./pruebas_chanutron
+```
 
 - Para ejecutar con valgrind:
+```bash
 make valgrind-chanutron
+```
 ---
-
 
 ##  Funcionamiento
 
