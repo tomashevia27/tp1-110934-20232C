@@ -101,7 +101,6 @@ lo que hace este algoritmo es ir comparando los nombres de los pokemones de a pa
 cuando termina de comparar, arranca otra vez desde el inicio, esta vez llega a comparar hasta el anteultimo pokemon.
 luego arranca devuelta y llega hasta el anteultimo.
 asi itera hasta terminar comparando todos los pokemones y quedan ordenados.
-
 El costo computacional es de n².
 
 
