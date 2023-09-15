@@ -159,27 +159,25 @@ informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 	}
 }
 
+void recorrer_y_buscar_nombre(informacion_pokemon_t *ip, const char *nombre, int *indice_pokemon_encontrado){
+	int i = 0;
+	while(*indice_pokemon_encontrado == -1 && i < ip->cantidad_pokemones){
+		if(strcmp(ip->pokemones[i]->nombre, nombre) == 0){
+			*indice_pokemon_encontrado = i;
+		}
+		i++;
+	}
+}
+
 pokemon_t *pokemon_buscar(informacion_pokemon_t *ip, const char *nombre)
 {
 	if (ip == NULL || nombre == NULL){
 		return NULL;
 	}
 
-	int i = 0;
 	int indice_pokemon_encontrado = -1;
-	while(indice_pokemon_encontrado == -1 && i < ip->cantidad_pokemones){
-		if(strcmp(ip->pokemones[i]->nombre, nombre) == 0){
-			indice_pokemon_encontrado = i;
-		}
-		i++;
-	}
-	/*
-	if(indice_pokemon_encontrado != -1){
-		return ip->pokemones[indice_pokemon_encontrado];
-	} else{
-		return NULL;
-	}*/
-
+	recorrer_y_buscar_nombre(ip, nombre, &indice_pokemon_encontrado);
+	
 	return (indice_pokemon_encontrado != -1) ? ip->pokemones[indice_pokemon_encontrado] : NULL;
 }
 
@@ -211,17 +209,21 @@ enum TIPO pokemon_tipo(pokemon_t *pokemon)
 	return pokemon->tipo_pokemon;
 }
 
-const struct ataque *pokemon_buscar_ataque(pokemon_t *pokemon,
-					   const char *nombre)
-{
+void recorrer_y_buscar_ataque(pokemon_t *pokemon, const char *nombre, int *indice_ataque_encontrado){
 	int i = 0;
-	int indice_ataque_encontrado = -1;
-	while(indice_ataque_encontrado == -1 && i < MAX_ATAQUES){
+	while(*indice_ataque_encontrado == -1 && i < MAX_ATAQUES){
 		if (strcmp(pokemon->ataques[i].nombre, nombre) == 0){
-			indice_ataque_encontrado = i;
+			*indice_ataque_encontrado = i;
 		}
 		i++;
 	}
+}
+
+const struct ataque *pokemon_buscar_ataque(pokemon_t *pokemon,
+					   const char *nombre)
+{
+	int indice_ataque_encontrado = -1;
+	recorrer_y_buscar_ataque(pokemon, nombre, &indice_ataque_encontrado);
 
 	return (indice_ataque_encontrado != -1) ? &(pokemon->ataques[indice_ataque_encontrado]) : NULL;
 }

@@ -17,13 +17,9 @@ gcc pokemon.c -std=c99 -Wall -Wconversion -Wtype-limits -pedantic -Werror -O2 -g
 - Para ejecutar con valgrind:
 make valgrind-chanutron
 ---
+
+
 ##  Funcionamiento
-
-Explicación de cómo funcionan las estructuras desarrolladas en el TP y el funcionamiento general del mismo.
-
-Aclarar en esta parte todas las decisiones que se tomaron al realizar el TP, cosas que no se aclaren en el enunciado, fragmentos de código que necesiten explicación extra, etc.
-
-Incluír **EN TODOS LOS TPS** los diagramas relevantes al problema (mayormente diagramas de memoria para explicar las estructuras, pero se pueden utilizar otros diagramas si es necesario).
 
 El codigo de pokemon.c realiza diferentes acciones con el archivo que recibe, lo primero que hace es leer el archivo y, si cumple con el formato pedido en la funcion, guarda los pokemones en la memoria del programa y en otras funciones permite realizar con estos pokemones diferentes acciones.
 El archivo debe tener el siguiente formato para que la funcion pokemon_cargar_archivo logre almacenar los pokemones en memoria:
@@ -90,33 +86,15 @@ todas estas funciones chequean que los datos que reciben no sean null, si lo son
 pokemon_destruir_todo: libera toda la memoria que se usa durante la ejecucion del programa, mediante free()
 
 
-
-
-
-### Por ejemplo:
-
-El programa funciona abriendo el archivo pasado como parámetro y leyendolo línea por línea. Por cada línea crea un registro e intenta agregarlo al vector. La función de lectura intenta leer todo el archivo o hasta encontrar el primer error. Devuelve un vector con todos los registros creados.
-
-<div align="center">
-<img width="70%" src="img/diagrama1.svg">
-</div>
-
-En el archivo `sarasa.c` la función `funcion1` utiliza `realloc` para agrandar la zona de memoria utilizada para conquistar el mundo. El resultado de `realloc` lo guardo en una variable auxiliar para no perder el puntero original en caso de error:
-
-```c
-int *vector = realloc(vector_original, (n+1)*sizeof(int));
-
-if(vector == NULL)
-    return -1;
-vector_original = vector;
-```
-
-
-<div align="center">
-<img width="70%" src="img/diagrama2.svg">
-</div>
-
----
-
 ## Respuestas a las preguntas teóricas
-Incluír acá las respuestas a las preguntas del enunciado (si aplica).
+
+1. para ordenar los pokemones alfabeticamente, uso el metodo de ordenamiento Burbujeo.
+lo que hace este algoritmo es ir comparando los nombres de los pokemones de a pares "empujando" hacia el fondo del vector al pokemon con nombre "mas grande" alfabeticamente. por ejemplo si compara pokemones[0].nombre = "Pikachu" y pokemones[1].nombre = "Charmander" lo que hace es intercambiar de posicion a estos pokemones, luego continua comparando a Pikachu con el pokemon en la posicion 2, luego la 3 y asi continua hasta el final.
+cuando termina de comparar, arranca otra vez desde el inicio, esta vez llega a comparar hasta el anteultimo pokemon.
+luego arranca devuelta y llega hasta el anteultimo.
+asi itera hasta terminar comparando todos los pokemones y quedan ordenados.
+El costo computacional es de n².
+
+<div align="center">
+<img width="70%" src="img/diagrama-tp1.svg">
+</div>
